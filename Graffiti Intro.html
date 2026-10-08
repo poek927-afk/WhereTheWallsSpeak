@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://use.typekit.net/dct6kva.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&display=swap">
+<style>
+  :root {
+    --bg: #fdfdfc;
+    --ink: #0b0b0b;
+    --body: #2b2b29;
+    --divider: #e4e2dc;
+    --sticker: #f4d84a;
+    --sticker-ink: #141412;
+    --font-display: "abolition", "Anton", Impact, "Arial Narrow", sans-serif;
+    --font-body: "Shobhika", Georgia, "Times New Roman", serif;
+    --speed: 0.75s;
+    --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e0e0d;
+      --ink: #f6f5f1;
+      --body: #d4d2cb;
+      --divider: #2a2927;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e0e0d;
+    --ink: #f6f5f1;
+    --body: #d4d2cb;
+    --divider: #2a2927;
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    overflow: hidden;
+  }
+  img { max-width: 100%; }
+
+  .split {
+    display: grid;
+    grid-template-columns: var(--left, 1fr) var(--right, 1fr);
+    height: 100vh;
+    height: 100dvh;
+    transition: grid-template-columns var(--speed) ease;
+  }
+  @media (hover: hover) {
+    .split:has(.col-intro:hover) { --left: 2.333fr; }
+    .split:has(.col-text:hover) { --right: 2.333fr; }
+  }
+  .split:has(.col-intro :focus-visible) { --left: 2.333fr; }
+  .split:has(.col-text:focus-visible) { --right: 2.333fr; }
+  .col {
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    container-type: inline-size;
+    outline: none;
+  }
+  .col::-webkit-scrollbar { display: none; }
+  .col + .col { border-left: 1px solid var(--divider); }
+  .col:focus-visible { box-shadow: inset 0 0 0 3px var(--ink); }
+
+  .btn {
+    position: fixed;
+    z-index: 10;
+    padding: 0.45em 0.9em;
+    background: var(--sticker);
+    color: var(--sticker-ink);
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border-radius: 2px;
+    transform: rotate(var(--rot));
+    box-shadow: 0 2px 0 rgb(0 0 0 / 0.28), 0 6px 14px rgb(0 0 0 / 0.16);
+    transition:
+      transform 0.55s var(--ease),
+      box-shadow 0.55s var(--ease);
+  }
+  .btn-home { --rot: -1.6deg; top: 1rem; left: 1rem; }
+  .btn:hover,
+  .btn:focus-visible {
+    transform: rotate(0deg) scale(1.05);
+    box-shadow: 0 3px 0 rgb(0 0 0 / 0.28), 0 12px 24px rgb(0 0 0 / 0.26);
+  }
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+
+  /* ---------- Left column: INTRO + the swapping image ---------- */
+  .col-intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5rem 4cqi 20vh;
+  }
+  .col-intro h1 {
+    align-self: stretch;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: min(68cqi, 40vh);
+    line-height: 0.86;
+    text-align: center;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .swap {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 66vh;
+    flex-shrink: 0;
+    margin-top: 4vh;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: transform var(--speed) var(--ease);
+  }
+  .swap img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.35));
+    transition:
+      opacity 0.5s ease,
+      transform 0.6s var(--ease);
+  }
+  .swap img { opacity: 0; transform: scale(0.6) rotate(-12deg); }
+  .swap img.is-out { transform: scale(0.6) rotate(12deg); }
+  .swap img.is-on { opacity: 1; transform: none; }
+  @media (hover: hover) {
+    .swap:hover { transform: scale(1.06) rotate(-2deg); }
+  }
+  .swap:focus-visible { outline: 3px solid var(--ink); outline-offset: 6px; }
+  .hint {
+    margin: 1.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--body);
+    opacity: 0.7;
+  }
+
+  /* ---------- Right column: the text ---------- */
+  .col-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5rem 6cqi;
+  }
+  .col-text p {
+    font-size: clamp(1rem, 3.6cqi, 1.5rem);
+    line-height: 2;
+    color: var(--body);
+    max-width: 34ch;
+    margin: 0 0 1.5rem;
+  }
+
+  .js .reveal {
+    opacity: 0;
+    translate: 0 4rem;
+    transition:
+      opacity 0.9s ease,
+      translate 0.9s var(--ease);
+  }
+  .js .reveal.is-in {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @media (max-width: 700px) {
+    body { overflow: auto; }
+    .split { grid-template-columns: 1fr; height: auto; }
+    .col { overflow: visible; }
+    .col + .col { border-left: 0; border-top: 1px solid var(--divider); }
+    .col-intro { padding: 4.5rem 1rem 3rem; }
+    .col-text { padding: 2rem 1rem 3rem; }
+    .col-text p { font-size: 1rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+    .js .reveal { opacity: 1; translate: none; }
+  }
+</style>
+</head>
+<body>
+<a class="btn btn-home" href="Table%20of%20Contents.html">&larr; Home</a>
+
+<main class="split">
+  <section class="col col-intro" aria-label="Intro">
+    <h1>Intro</h1>
+    <button class="swap reveal" type="button" aria-label="Show the next graffiti example">
+      <img class="is-on" src="GrafLinks/BlueGuyTrimmed.png" alt="">
+      <img src="GrafLinks/yellowTag.png" alt="">
+      <img src="GrafLinks/capitalTag.png" alt="">
+      <img src="GrafLinks/tag1.png" alt="">
+      <img src="GrafLinks/redOutlineTag.png" alt="">
+      <img src="GrafLinks/blueBrickFlop.png" alt="">
+      <img src="GrafLinks/blueFlop.png" alt="">
+      <img src="GrafLinks/blueBubbleFlop.png" alt="">
+      <img src="GrafLinks/Homesick-graffiti-bombing-nyc.png" alt="">
+      <img src="GrafLinks/brooklyn.png" alt="">
+      <img src="GrafLinks/panikTrimmed.png" alt="">
+      <img src="GrafLinks/catGuyTrimmed.png" alt="">
+      <img src="GrafLinks/pizzaGuyTrimmed.png" alt="">
+    </button>
+    <p class="hint">Click the image</p>
+  </section>
+
+  <section class="col col-text" tabindex="0" aria-label="About this website">
+    <p class="reveal">The website is built to allow interactive exploration of graffiti around NYC. I hope that everyone who views this website is able to leave with a new understanding and appreciation of graffiti as an art form and learns more about its history.</p>
+    <p class="reveal">Hope you enjoy!</p>
+  </section>
+</main>
+
+<script>
+  (function () {
+    if (!('IntersectionObserver' in window)) return;
+    document.documentElement.classList.add('js');
+    var stacked = window.matchMedia('(max-width: 700px)').matches;
+    document.querySelectorAll('.col').forEach(function (col) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          e.target.classList.toggle('is-in', e.isIntersecting);
+        });
+      }, { root: stacked ? null : col, threshold: 0.15 });
+      col.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+    });
+  })();
+
+  // Each click spins the current image out and the next one in, looping
+  // through every piece from the Styles of Graffiti pages.
+  (function () {
+    var swap = document.querySelector('.swap');
+    var imgs = swap.querySelectorAll('img');
+    var i = 0;
+    swap.addEventListener('click', function () {
+      imgs[i].classList.remove('is-on');
+      imgs[i].classList.add('is-out');
+      i = (i + 1) % imgs.length;
+      imgs[i].classList.remove('is-out');
+      imgs[i].classList.add('is-on');
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Where the Walls Speak</title>
+<style>
+  :root {
+    --wall: #080808;
+    --sticker: #f4d84a;
+    --sticker-ink: #141412;
+    --focus: #7ee36a;
+    --font-body: "Shobhika", Georgia, "Times New Roman", serif;
+    --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--wall);
+    font-family: var(--font-body);
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+
+  /* The wall fills the whole screen: the two tall pieces run down each side
+     and the tag, title and cat stack in the middle column, which takes
+     whatever width is left. */
+  .wall {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    padding: 1.5vh 1vw 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 1.5vw;
+  }
+  .middle {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1vh;
+  }
+
+  .piece {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    object-fit: contain;
+    transition:
+      transform 0.6s var(--ease),
+      filter 0.6s var(--ease),
+      opacity 0.6s ease;
+    animation: spray-in 0.9s var(--ease) backwards;
+  }
+
+  .hoogs { height: min(97vh, 52vw); width: auto; align-self: center; --tilt: -3deg; --glow: #d8d4cc; animation-delay: 0.05s; }
+  .face  { height: min(97vh, 46vw); width: auto; align-self: center; --tilt: 3deg;  --glow: #e0321e; animation-delay: 0.2s; }
+  .tag   { flex: none; width: 100%; max-height: 22vh; --tilt: -2deg; --glow: #f1e3c8; animation-delay: 0.35s; }
+  .title { flex: 1 1 0; margin: 0; display: flex; justify-content: center; --tilt: -2deg; --glow: #7ee36a; animation-delay: 0.7s; }
+  .title img { display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; }
+  .cat   { flex: none; height: 30vh; width: auto; margin-bottom: -8vh; --tilt: 4deg; --glow: #ffffff; animation-delay: 0.5s; }
+
+  /* Hovering a piece lifts it out of the wall and makes it glow in its own
+     paint colour, while everything else fades back. */
+  @media (hover: hover) {
+    .piece:hover {
+      z-index: 5;
+      transform: scale(1.08) rotate(var(--tilt));
+      filter: drop-shadow(0 0 14px var(--glow)) brightness(1.25);
+    }
+    .face:hover  { transform: scale(1.05) rotate(var(--tilt)); }
+    .cat:hover   { transform: translateY(-18%) scale(1.12) rotate(var(--tilt)); }
+    .title:hover { transform: scale(1.12) rotate(var(--tilt)); }
+    .wall:has(.piece:hover) .piece:not(:hover) { opacity: 0.25; }
+  }
+
+  /* Pieces spray onto the wall one after another when the page loads. */
+  @keyframes spray-in {
+    from { opacity: 0; filter: blur(12px); transform: scale(1.1); }
+  }
+
+  .toc {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 10;
+    padding: 0.55em 1.1em;
+    background: var(--sticker);
+    color: var(--sticker-ink);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-decoration: none;
+    border-radius: 2px;
+    transform: rotate(1.6deg);
+    box-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 6px 14px rgb(0 0 0 / 0.4);
+    transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
+  }
+  .toc:hover,
+  .toc:focus-visible {
+    transform: rotate(0deg) scale(1.06);
+    box-shadow: 0 3px 0 rgb(0 0 0 / 0.5), 0 12px 24px rgb(0 0 0 / 0.55);
+  }
+  .toc:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="wall">
+  <img class="piece hoogs" src="GrafLinks/C2Trimmed.png" alt="">
+  <div class="middle">
+    <img class="piece tag" src="GrafLinks/C1Trimmed.png" alt="">
+    <h1 class="piece title"><img src="GrafLinks/C5Trimmed.png" alt="Where the walls speak"></h1>
+    <img class="piece cat" src="GrafLinks/catGuyTrimmed.png" alt="">
+  </div>
+  <img class="piece face" src="GrafLinks/C3Trimmed.png" alt="">
+</main>
+
+<a class="toc" href="Table%20of%20Contents.html">Table of Contents &rarr;</a>
+</body>
+</html>

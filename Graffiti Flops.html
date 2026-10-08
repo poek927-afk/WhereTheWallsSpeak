@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Graffiti Flops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://use.typekit.net/dct6kva.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&display=swap">
+<style>
+  :root {
+    --bg: #fdfdfc;
+    --ink: #0b0b0b;
+    --body: #2b2b29;
+    --divider: #e4e2dc;
+    --sticker: #f4d84a;
+    --sticker-ink: #141412;
+    --font-display: "abolition", "Anton", Impact, "Arial Narrow", sans-serif;
+    --font-body: "Shobhika", Georgia, "Times New Roman", serif;
+    --grow: 2.333; /* 70 / 30 split */
+    --speed: 0.75s;
+    --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e0e0d;
+      --ink: #f6f5f1;
+      --body: #d4d2cb;
+      --divider: #2a2927;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e0e0d;
+    --ink: #f6f5f1;
+    --body: #d4d2cb;
+    --divider: #2a2927;
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    overflow: hidden;
+  }
+  img { max-width: 100%; }
+
+  .split {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+  }
+  .col {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    container-type: inline-size;
+    outline: none;
+    transition: flex-grow var(--speed) ease;
+  }
+  .col::-webkit-scrollbar { display: none; }
+  .col + .col { border-left: 1px solid var(--divider); }
+  @media (hover: hover) {
+    .col:hover { flex-grow: var(--grow); }
+  }
+  .col:focus-visible {
+    flex-grow: var(--grow);
+    box-shadow: inset 0 0 0 3px var(--ink);
+  }
+
+  .btn {
+    position: fixed;
+    z-index: 10;
+    padding: 0.45em 0.9em;
+    background: var(--sticker);
+    color: var(--sticker-ink);
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border-radius: 2px;
+    transform: rotate(var(--rot));
+    box-shadow: 0 2px 0 rgb(0 0 0 / 0.28), 0 6px 14px rgb(0 0 0 / 0.16);
+    transition:
+      transform 0.55s var(--ease),
+      box-shadow 0.55s var(--ease);
+  }
+  .btn-home { --rot: -1.6deg; top: 1rem; left: 1rem; }
+  .btn-back { --rot: -1.1deg; bottom: 1rem; left: 1rem; }
+  .btn-next { --rot: 1.1deg; bottom: 1rem; right: 1rem; }
+  .btn:hover,
+  .btn:focus-visible {
+    transform: rotate(0deg) scale(1.05);
+    box-shadow: 0 3px 0 rgb(0 0 0 / 0.28), 0 12px 24px rgb(0 0 0 / 0.26);
+  }
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+
+  .wall {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10vh;
+    padding: 12vh 1rem 20vh;
+  }
+  .flop-wrap {
+    margin: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  .flop {
+    display: block;
+    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.35));
+    transition:
+      transform var(--speed) ease,
+      opacity var(--speed) ease;
+  }
+  .flop-a { width: 82%; transform: rotate(-6deg); }
+  .flop-b { width: 66%; transform: rotate(3deg); }
+  .flop-c { width: 62%; transform: rotate(-3deg); }
+
+  @media (hover: hover) {
+    .flop:hover { transform: rotate(0deg) scale(1.2); }
+    .wall:has(.flop:hover) .flop:not(:hover) { opacity: 0.35; }
+  }
+
+  .col-text { padding-inline: 4cqi; }
+  .col-text h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 80cqi;
+    line-height: 0.86;
+    text-transform: uppercase;
+    margin: 0;
+    padding-top: 0.06em;
+  }
+  .col-text p {
+    font-size: clamp(0.85rem, 2.4cqi, 1.1rem);
+    line-height: 2;
+    color: var(--body);
+    max-width: 68ch;
+    text-align: justify;
+    margin: 1.5rem 0 0;
+    padding-bottom: 20vh;
+  }
+
+  .js .reveal {
+    opacity: 0;
+    translate: 0 4rem;
+    transition:
+      opacity 0.9s ease,
+      translate 0.9s var(--ease);
+  }
+  .js .reveal.is-in {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @media (max-width: 700px) {
+    body { overflow: auto; }
+    .split { flex-direction: column; height: auto; }
+    .col { flex: none; overflow: visible; }
+    .col + .col { border-left: 0; border-top: 1px solid var(--divider); }
+    .wall { padding: 4.5rem 1rem 3rem; gap: 3rem; }
+    .col-text { padding: 1rem; }
+    .col-text h1 { font-size: 78cqi; }
+    .col-text p { font-size: 0.95rem; text-align: left; padding-bottom: 2rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+    .js .reveal { opacity: 1; translate: none; }
+  }
+</style>
+</head>
+<body>
+<a class="btn btn-home" href="Table%20of%20Contents.html">&larr; Home</a>
+<a class="btn btn-back" href="Graffiti%20Tags.html">&larr; Back: Tags</a>
+<a class="btn btn-next" href="Graffiti%20Block%20Busters.html">Next: Block Busters &rarr;</a>
+
+<main class="split">
+  <section class="col col-flops" tabindex="0" aria-label="Examples of flops">
+    <div class="wall" aria-hidden="true">
+      <figure class="flop-wrap reveal"><img class="flop flop-a" src="GrafLinks/blueBrickFlop.png" alt=""></figure>
+      <figure class="flop-wrap reveal"><img class="flop flop-b" src="GrafLinks/blueFlop.png" alt=""></figure>
+      <figure class="flop-wrap reveal"><img class="flop flop-c" src="GrafLinks/blueBubbleFlop.png" alt=""></figure>
+    </div>
+  </section>
+
+  <section class="col col-text" tabindex="0" aria-label="About flops">
+    <h1>Flop</h1>
+    <p class="reveal">Thought of as a more sophisticated version of the tag and much more visible, the “throw up” or “flop” is a form of lettering executed just as quickly, but which takes the name of the graffiti artist (or “writer”) and enlarges it. The goal is to become known with a more impressive style because the letters are larger. The tagger usually uses two colors, one for filling the letters and the other one for the outline. The letter is transformed by adding volume, often achieved through a style known as “bubble”. New York graffiti artists in the 1970s competed using this technique to obtain the honorary title of “All City King.”</p>
+  </section>
+</main>
+
+<script>
+  (function () {
+    if (!('IntersectionObserver' in window)) return;
+    document.documentElement.classList.add('js');
+    var stacked = window.matchMedia('(max-width: 700px)').matches;
+    document.querySelectorAll('.col').forEach(function (col) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          e.target.classList.toggle('is-in', e.isIntersecting);
+        });
+      }, { root: stacked ? null : col, threshold: 0.15 });
+      col.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+    });
+  })();
+</script>
+</body>
+</html>
