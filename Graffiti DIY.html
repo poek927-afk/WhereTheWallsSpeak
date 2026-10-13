@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Do It Yourself</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://use.typekit.net/dct6kva.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Merriweather:wght@700&display=swap">
+<style>
+  /* A full-screen brick wall to spray paint on. The paint lives on a
+     transparent canvas over the brick, so clearing it leaves the wall. */
+  :root {
+    --wall: #5a2a20;
+    --bar: rgb(14 14 13 / 0.82);
+    --bar-ink: #f6f5f1;
+    --bar-line: rgb(255 255 255 / 0.18);
+    --sticker-ink: #141412;
+    --sticker-green: #4dff4d;
+    --focus: #4dff4d;
+    --font-display: "abolition", "Anton", Impact, "Arial Narrow", sans-serif;
+    --font-body: "Merriweather", Georgia, serif;
+    --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; }
+  /* The wall photo is chosen in the toolbar (data-wall on <body>). */
+  body {
+    --wall-img: url("GrafLinks/brick.webp");
+    background: var(--wall);
+    transition: background-color 0.4s ease;
+    color: var(--bar-ink);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+  }
+
+  body[data-wall="concrete"] { --wall: #7a7a78; --wall-img: url("GrafLinks/wall-concrete.jpg"); }
+  body[data-wall="metal"]    { --wall: #8c8c8a; --wall-img: url("GrafLinks/wall-metal.jpg"); }
+  body[data-wall="stone"]    { --wall: #b8433d; --wall-img: url("GrafLinks/wall-stone.jpg"); }
+
+  /* The wall is several screens tall and the page scrolls. The photo is
+     scaled to the window's width and repeats down the wall. Its height is
+     set by the script. */
+  .wall {
+    display: block;
+    width: 100%;
+    height: 300vh;
+    background: var(--wall-img) top center / 100% auto repeat-y;
+    touch-action: none;
+    cursor: none;
+  }
+
+  /* Ring that follows the mouse and shows how wide the spray is. */
+  .nozzle {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: var(--d, 60px);
+    height: var(--d, 60px);
+    margin: calc(var(--d, 60px) / -2) 0 0 calc(var(--d, 60px) / -2);
+    border: 2px solid var(--paint, #4dff4d);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .nozzle.is-on { opacity: 1; }
+
+  .hint {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(3rem, 12vw, 9rem);
+    line-height: 0.9;
+    text-align: center;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.9);
+    text-shadow: 0 4px 24px rgb(0 0 0 / 0.6);
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+  }
+  .hint small {
+    display: block;
+    margin-top: 0.6rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    text-transform: none;
+  }
+  .hint.is-gone { opacity: 0; }
+
+
+  /* ---------- Menu: the "Where the walls speak" piece opens a drop-down
+     with paint-splat links to the contents page and Do It Yourself. ---------- */
+  .menu {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 20;
+  }
+  .menu-toggle {
+    display: block;
+    width: clamp(5rem, 9vw, 8rem);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    transform: rotate(-2deg);
+    transition:
+      transform 0.55s var(--ease),
+      filter 0.55s var(--ease);
+  }
+  .menu-toggle img { display: block; width: 100%; height: auto; }
+  .menu-toggle:hover,
+  .menu-toggle:focus-visible,
+  .menu.is-open .menu-toggle {
+    transform: rotate(0deg) scale(1.12);
+    filter: drop-shadow(0 0 12px #4dff4d) brightness(1.2);
+  }
+  .menu-toggle:focus-visible { outline: 3px solid #4dff4d; outline-offset: 4px; }
+
+  .menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 1.6rem 0 0 2.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2.4rem;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-0.75rem);
+    transition:
+      opacity 0.3s ease,
+      transform 0.45s var(--ease),
+      visibility 0s linear 0.45s;
+  }
+  .menu.is-open .menu-list {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.3s ease,
+      transform 0.45s var(--ease),
+      visibility 0s;
+  }
+  .menu-list li:nth-child(odd)  { --rot: -1.6deg; }
+  .menu-list li:nth-child(even) { --rot:  1.4deg; }
+  /* Same colours as the stickers on the contents page. */
+  .to-contents { --paint: url(#menu-paint-black);   --text: #4dff4d; }
+  .to-history  { --paint: url(#menu-paint-green);   --text: #141412; }
+  .to-styles   { --paint: url(#menu-paint-magenta); --text: #141412; }
+  .to-diy      { --paint: url(#menu-paint-red);     --text: #ffffff; }
+  /* Splat behind each link, drawn larger than the label so the label sits
+     on its solid middle (same as the contents page stickers). */
+  .menu-link {
+    position: relative;
+    display: inline-block;
+    isolation: isolate;
+    padding: 0.35em 0.6em;
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-decoration: none;
+    transform: rotate(var(--rot));
+    filter: drop-shadow(0 2px 0 rgb(0 0 0 / 0.28)) drop-shadow(0 6px 10px rgb(0 0 0 / 0.2));
+    transition:
+      transform 0.55s var(--ease),
+      filter 0.55s var(--ease);
+  }
+  .menu-link::before {
+    content: "";
+    position: absolute;
+    inset: -60% -32%;
+    z-index: -1;
+    background: url("GrafLinks/splat.png") center / 100% 100% no-repeat;
+    filter: var(--paint);
+  }
+  .menu-link:hover,
+  .menu-link:focus-visible {
+    transform: translateX(0.4rem) rotate(0deg) scale(1.05);
+    filter: drop-shadow(0 3px 0 rgb(0 0 0 / 0.28)) drop-shadow(0 12px 18px rgb(0 0 0 / 0.3));
+  }
+  .menu-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+
+  /* ---------- Toolbar: colours, nozzle size, undo, clear ---------- */
+  .tools {
+    position: fixed;
+    left: 50%;
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1.25rem;
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+    padding: 0.7rem 1rem;
+    background: var(--bar);
+    border: 1px solid var(--bar-line);
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.45);
+    font-size: 0.85rem;
+  }
+  .swatches {
+    display: flex;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .swatch {
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    border: 2px solid rgb(255 255 255 / 0.35);
+    border-radius: 50%;
+    background: var(--c);
+    cursor: pointer;
+    transition: transform 0.25s var(--ease), border-color 0.25s ease;
+  }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch[aria-pressed="true"] {
+    border-color: #ffffff;
+    transform: scale(1.18);
+    box-shadow: 0 0 0 2px rgb(0 0 0 / 0.6);
+  }
+  .walls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .walls legend {
+    float: left;
+    margin-right: 0.35rem;
+    padding: 0;
+  }
+  .wall-pick {
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0;
+    border: 2px solid rgb(255 255 255 / 0.35);
+    border-radius: 6px;
+    background: var(--img) center / cover;
+    cursor: pointer;
+    transition: transform 0.25s var(--ease), border-color 0.25s ease;
+  }
+  .wall-pick:hover { transform: scale(1.1); }
+  .wall-pick[aria-pressed="true"] {
+    border-color: #ffffff;
+    transform: scale(1.14);
+    box-shadow: 0 0 0 2px rgb(0 0 0 / 0.6);
+  }
+  .wall-pick:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+  .size {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .size input { width: 7rem; accent-color: var(--sticker-green); }
+  .tool-btn {
+    padding: 0.45em 0.95em;
+    border: 1px solid var(--bar-line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--bar-ink);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .tool-btn:hover { background: rgb(255 255 255 / 0.12); }
+  .tool-btn:disabled { opacity: 0.4; cursor: default; background: transparent; }
+  .swatch:focus-visible,
+  .tool-btn:focus-visible,
+  .size input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+  @media (max-width: 700px) {
+    .tools { border-radius: 1.25rem; gap: 0.6rem 0.9rem; }
+    .swatch { width: 1.7rem; height: 1.7rem; }
+    .wall-pick { width: 1.9rem; height: 1.9rem; }
+    .size input { width: 5.5rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+  }
+</style>
+</head>
+<body data-wall="brick">
+<canvas class="wall" aria-label="Brick wall. Click and drag to spray paint."></canvas>
+<div class="nozzle" aria-hidden="true"></div>
+
+<p class="hint">Do it yourself<small>Click and drag to spray the wall. Scroll down for more wall.</small></p>
+
+<nav class="menu" aria-label="Site">
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu-list">
+    <img src="GrafLinks/C5Trimmed.png" alt="Menu">
+  </button>
+  <ul class="menu-list" id="menu-list">
+    <li><a class="menu-link to-contents" href="Table%20of%20Contents.html">Introduction</a></li>
+    <li><a class="menu-link to-history" href="Graffiti%20History.html">History of NYC Graffiti</a></li>
+    <li><a class="menu-link to-styles" href="Graffiti%20Tags.html">Styles of Graffiti</a></li>
+  </ul>
+</nav>
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <filter id="menu-paint-green" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#4dff4d"/>
+    <feComposite in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="menu-paint-red" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#d7262e"/>
+    <feComposite in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="menu-paint-magenta" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#f22ef2"/>
+    <feComposite in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="menu-paint-black" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#0b0b0b"/>
+    <feComposite in2="SourceAlpha" operator="in"/>
+  </filter>
+</svg>
+
+<div class="tools" role="toolbar" aria-label="Spray paint">
+  <fieldset class="swatches" aria-label="Paint colour">
+    <button class="swatch" type="button" style="--c: #4dff4d" data-color="#4dff4d" aria-label="Green" aria-pressed="true"></button>
+    <button class="swatch" type="button" style="--c: #f22ef2" data-color="#f22ef2" aria-label="Magenta" aria-pressed="false"></button>
+    <button class="swatch" type="button" style="--c: #f4d84a" data-color="#f4d84a" aria-label="Yellow" aria-pressed="false"></button>
+    <button class="swatch" type="button" style="--c: #2f8cff" data-color="#2f8cff" aria-label="Blue" aria-pressed="false"></button>
+    <button class="swatch" type="button" style="--c: #d7262e" data-color="#d7262e" aria-label="Red" aria-pressed="false"></button>
+    <button class="swatch" type="button" style="--c: #ffffff" data-color="#ffffff" aria-label="White" aria-pressed="false"></button>
+    <button class="swatch" type="button" style="--c: #0b0b0b" data-color="#0b0b0b" aria-label="Black" aria-pressed="false"></button>
+  </fieldset>
+  <fieldset class="walls">
+    <legend>Wall</legend>
+    <button class="wall-pick" type="button" style="--img: url('GrafLinks/brick.webp')" data-wall="brick" aria-label="Brick" title="Brick" aria-pressed="true"></button>
+    <button class="wall-pick" type="button" style="--img: url('GrafLinks/wall-concrete.jpg')" data-wall="concrete" aria-label="Concrete" title="Concrete" aria-pressed="false"></button>
+    <button class="wall-pick" type="button" style="--img: url('GrafLinks/wall-metal.jpg')" data-wall="metal" aria-label="Metal" title="Metal" aria-pressed="false"></button>
+    <button class="wall-pick" type="button" style="--img: url('GrafLinks/wall-stone.jpg')" data-wall="stone" aria-label="Stone" title="Stone" aria-pressed="false"></button>
+  </fieldset>
+  <label class="size">Size <input type="range" min="12" max="90" value="34" aria-label="Spray size"></label>
+  <button class="tool-btn" type="button" data-action="undo" disabled>Undo</button>
+  <button class="tool-btn" type="button" data-action="clear">Clear wall</button>
+</div>
+
+
+<script>
+  // Spray paint: while the mouse is held down, every frame sprays a soft
+  // cloud of paint (a dense core plus scattered droplets) at the nozzle and
+  // fills in the path between frames so fast strokes stay solid. Holding
+  // still builds up paint until it drips.
+  (function () {
+    var canvas = document.querySelector('.wall');
+    var ctx = canvas.getContext('2d');
+    var nozzle = document.querySelector('.nozzle');
+    var hint = document.querySelector('.hint');
+    var sizeInput = document.querySelector('.size input');
+    var undoBtn = document.querySelector('[data-action="undo"]');
+    var clearBtn = document.querySelector('[data-action="clear"]');
+    var swatches = document.querySelectorAll('.swatch');
+
+    // The wall is this many screens tall. The canvas is kept at 1 pixel
+    // per CSS pixel: a wall this big at retina resolution would use too much
+    // memory, and soft spray paint doesn't need the extra sharpness.
+    var WALL_SCREENS = 3;
+    var wallW = 0, wallH = 0;
+    var color = '#4dff4d';
+    var radius = +sizeInput.value;
+    var spraying = false;
+    var client = null;  // where the pointer is on screen
+    var last = null;    // where the nozzle was on the wall last frame
+    var wet = 0;        // paint built up at one spot; drips past a point
+    var drips = [];
+    var history = [];
+    var MAX_UNDO = 12;
+
+    // ---------- wall size. It only grows (and keeps the painting) when the
+    // window gets wider or taller; phone toolbars showing and hiding while
+    // you scroll don't reset it.
+    function resize() {
+      var w = document.documentElement.clientWidth;
+      var h = Math.max(wallH, Math.round(window.innerHeight * WALL_SCREENS));
+      if (w === wallW && h === wallH) return;
+      var old = null;
+      if (wallW && wallH) {
+        old = document.createElement('canvas');
+        old.width = canvas.width;
+        old.height = canvas.height;
+        old.getContext('2d').drawImage(canvas, 0, 0);
+      }
+      wallW = w;
+      wallH = h;
+      canvas.width = w;
+      canvas.height = h;
+      canvas.style.height = h + 'px';
+      if (old) ctx.drawImage(old, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Screen position -> position on the wall.
+    function onWall(c) {
+      var r = canvas.getBoundingClientRect();
+      return { x: c.x - r.left, y: c.y - r.top };
+    }
+
+    // ---------- the spray itself
+    function rgba(hex, a) {
+      var n = parseInt(hex.slice(1), 16);
+      return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+    }
+
+    // Distance from the centre for a droplet: most land near the middle,
+    // a few fly well past the edge as overspray.
+    function scatter(r) {
+      var d = Math.sqrt(-2 * Math.log(1 - Math.random() * 0.999)) * r * 0.42;
+      return Math.min(d, r * 1.5);
+    }
+
+    function puff(x, y, r, strength) {
+      // Soft, dense core.
+      var g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, rgba(color, 0.22 * strength));
+      g.addColorStop(0.55, rgba(color, 0.12 * strength));
+      g.addColorStop(1, rgba(color, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Droplets.
+      ctx.fillStyle = color;
+      var n = Math.round(r * 2.2 * strength);
+      for (var i = 0; i < n; i++) {
+        var a = Math.random() * Math.PI * 2;
+        var d = scatter(r);
+        var s = Math.random() < 0.06 ? 1.2 + Math.random() * 1.6 : 0.4 + Math.random() * 0.9;
+        ctx.globalAlpha = d > r ? 0.5 : 0.85;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function sprayAlong(a, b) {
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var dist = Math.hypot(dx, dy);
+      var step = Math.max(2, radius * 0.22);
+      var steps = Math.max(1, Math.ceil(dist / step));
+      // Moving fast lays down less paint per spot, like a real can.
+      var strength = Math.max(0.35, 1 - dist / (radius * 6));
+      for (var i = 1; i <= steps; i++) {
+        var t = i / steps;
+        puff(a.x + dx * t, a.y + dy * t, radius, strength);
+      }
+      return dist;
+    }
+
+    // ---------- drips
+    function startDrip(x, y) {
+      drips.push({
+        x: x + (Math.random() - 0.5) * radius * 0.8,
+        y: y + radius * 0.35,
+        w: Math.max(2, radius * (0.08 + Math.random() * 0.06)),
+        left: radius * (1.2 + Math.random() * 2.5),
+        speed: 1.6 + Math.random() * 1.4,
+        color: color
+      });
+    }
+
+    function runDrips() {
+      for (var i = drips.length - 1; i >= 0; i--) {
+        var d = drips[i];
+        var move = Math.min(d.speed, d.left);
+        ctx.strokeStyle = d.color;
+        ctx.lineWidth = d.w;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d.x, d.y + move);
+        ctx.stroke();
+        d.y += move;
+        d.left -= move;
+        d.speed *= 0.985; // slows as it runs out of paint
+        d.w *= 0.996;
+        if (d.left <= 0 || d.speed < 0.15) {
+          // A bead of paint where the drip stops.
+          ctx.fillStyle = d.color;
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.w * 0.9, 0, Math.PI * 2);
+          ctx.fill();
+          drips.splice(i, 1);
+        }
+      }
+    }
+
+    // ---------- main loop: keeps spraying while the button is held. The
+    // nozzle's wall position is worked out every frame, so scrolling while
+    // spraying paints down the wall.
+    function frame() {
+      if (spraying && client) {
+        var pos = onWall(client);
+        var moved = sprayAlong(last || pos, pos);
+        last = { x: pos.x, y: pos.y };
+        if (moved < radius * 0.15) {
+          wet += 1;
+          if (wet > 28 && Math.random() < 0.08) { startDrip(pos.x, pos.y); wet = 14; }
+        } else {
+          wet = Math.max(0, wet - 2);
+        }
+      }
+      if (drips.length) runDrips();
+      if (spraying || drips.length) requestAnimationFrame(frame);
+      else looping = false;
+    }
+    var looping = false;
+    function loop() {
+      if (!looping) { looping = true; requestAnimationFrame(frame); }
+    }
+
+    // ---------- undo / clear. A stroke only saves the part of the wall
+    // around the screen (plus room for drips), not the whole wall.
+    function snapshot(whole) {
+      var x = 0, y = 0, w = canvas.width, h = canvas.height;
+      if (!whole) {
+        var top = -canvas.getBoundingClientRect().top;
+        y = Math.max(0, Math.floor(top - window.innerHeight * 0.5));
+        h = Math.min(canvas.height, Math.ceil(top + window.innerHeight * 1.5)) - y;
+      }
+      history.push({ img: ctx.getImageData(x, y, w, h), x: x, y: y });
+      if (history.length > MAX_UNDO) history.shift();
+      undoBtn.disabled = false;
+    }
+    function undo() {
+      var s = history.pop();
+      if (s) {
+        drips = [];
+        ctx.putImageData(s.img, s.x, s.y);
+      }
+      undoBtn.disabled = history.length === 0;
+    }
+    undoBtn.addEventListener('click', undo);
+    clearBtn.addEventListener('click', function () {
+      snapshot(true);
+      drips = [];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    // ---------- pointer input (mouse, pen and touch). One finger sprays;
+    // two fingers scroll the wall instead.
+    var touches = new Map();
+    var panY = null;
+
+    function moveNozzle(e) {
+      nozzle.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px)';
+    }
+    function avgY() {
+      var sum = 0;
+      touches.forEach(function (y) { sum += y; });
+      return sum / touches.size;
+    }
+
+    canvas.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0) return;
+      if (e.pointerType === 'touch') {
+        touches.set(e.pointerId, e.clientY);
+        if (touches.size === 2) {
+          // Second finger: this is a scroll, so take back the first
+          // finger's paint and start panning.
+          if (spraying) { spraying = false; client = null; undo(); }
+          panY = avgY();
+          return;
+        }
+        if (touches.size > 2) return;
+      }
+      canvas.setPointerCapture(e.pointerId);
+      snapshot(false);
+      spraying = true;
+      client = { x: e.clientX, y: e.clientY };
+      last = null;
+      wet = 0;
+      hint.classList.add('is-gone');
+      loop();
+    });
+    canvas.addEventListener('pointermove', function (e) {
+      moveNozzle(e);
+      if (e.pointerType === 'mouse') nozzle.classList.add('is-on');
+      if (e.pointerType === 'touch' && touches.has(e.pointerId)) {
+        touches.set(e.pointerId, e.clientY);
+        if (panY !== null) {
+          var y = avgY();
+          window.scrollBy(0, panY - y);
+          panY = y;
+          return;
+        }
+      }
+      if (spraying) client = { x: e.clientX, y: e.clientY };
+    });
+    function stop(e) {
+      if (e.pointerType === 'touch') {
+        touches.delete(e.pointerId);
+        if (panY !== null) {
+          panY = touches.size >= 2 ? avgY() : null;
+          return;
+        }
+      }
+      spraying = false;
+      client = null;
+      last = null;
+    }
+    canvas.addEventListener('pointerup', stop);
+    canvas.addEventListener('pointercancel', stop);
+    canvas.addEventListener('pointerleave', function () { nozzle.classList.remove('is-on'); });
+
+    // ---------- colour and size
+    function setNozzle() {
+      nozzle.style.setProperty('--d', radius * 2 + 'px');
+      nozzle.style.setProperty('--paint', color);
+    }
+    swatches.forEach(function (s) {
+      s.addEventListener('click', function () {
+        color = s.dataset.color;
+        swatches.forEach(function (o) { o.setAttribute('aria-pressed', String(o === s)); });
+        setNozzle();
+      });
+    });
+    sizeInput.addEventListener('input', function () {
+      radius = +sizeInput.value;
+      setNozzle();
+    });
+    setNozzle();
+
+    // ---------- wall: swaps the photo behind the paint, keeps the painting
+    var walls = document.querySelectorAll('.wall-pick');
+    walls.forEach(function (w) {
+      w.addEventListener('click', function () {
+        document.body.dataset.wall = w.dataset.wall;
+        walls.forEach(function (o) { o.setAttribute('aria-pressed', String(o === w)); });
+      });
+    });
+  })();
+</script>
+<script>
+  // Menu: with a mouse it opens on hover; a tap, or Enter/Space on the
+  // piece, toggles it. Escape or clicking elsewhere closes it.
+  (function () {
+    var menu = document.querySelector('.menu');
+    var toggle = menu.querySelector('.menu-toggle');
+    var hoverable = window.matchMedia('(hover: hover)').matches;
+    var closeTimer;
+    function set(open) {
+      menu.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    }
+    toggle.addEventListener('click', function (e) {
+      // A mouse click while hovering just keeps it open; keyboard
+      // (detail 0) and touch toggle.
+      if (hoverable && e.detail > 0) set(true);
+      else set(!menu.classList.contains('is-open'));
+    });
+    if (hoverable) {
+      menu.addEventListener('mouseenter', function () { clearTimeout(closeTimer); set(true); });
+      menu.addEventListener('mouseleave', function () {
+        closeTimer = setTimeout(function () { set(false); }, 250);
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && menu.classList.contains('is-open')) { set(false); toggle.focus(); }
+    });
+    document.addEventListener('click', function (e) {
+      if (!menu.contains(e.target)) set(false);
+    });
+    menu.addEventListener('focusout', function (e) {
+      if (e.relatedTarget && !menu.contains(e.relatedTarget)) set(false);
+    });
+  })();
+</script>
+</body>
+</html>

@@ -7,8 +7,6 @@
 <style>
   :root {
     --wall: #080808;
-    --sticker: #f4d84a;
-    --sticker-ink: #141412;
     --focus: #7ee36a;
     --font-body: "Shobhika", Georgia, "Times New Roman", serif;
     --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
@@ -87,29 +85,9 @@
     from { opacity: 0; filter: blur(12px); transform: scale(1.1); }
   }
 
-  .toc {
-    position: fixed;
-    right: 1.25rem;
-    bottom: 1.25rem;
-    z-index: 10;
-    padding: 0.55em 1.1em;
-    background: var(--sticker);
-    color: var(--sticker-ink);
-    font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 1.05rem;
-    text-decoration: none;
-    border-radius: 2px;
-    transform: rotate(1.6deg);
-    box-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 6px 14px rgb(0 0 0 / 0.4);
-    transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
-  }
-  .toc:hover,
-  .toc:focus-visible {
-    transform: rotate(0deg) scale(1.06);
-    box-shadow: 0 3px 0 rgb(0 0 0 / 0.5), 0 12px 24px rgb(0 0 0 / 0.55);
-  }
-  .toc:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+  /* The title piece is the way in: it links to the table of contents. */
+  .title a { display: flex; justify-content: center; height: 100%; max-width: 100%; }
+  .title a:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -121,12 +99,10 @@
   <img class="piece hoogs" src="GrafLinks/C2Trimmed.png" alt="">
   <div class="middle">
     <img class="piece tag" src="GrafLinks/C1Trimmed.png" alt="">
-    <h1 class="piece title"><img src="GrafLinks/C5Trimmed.png" alt="Where the walls speak"></h1>
+    <h1 class="piece title"><a href="Table%20of%20Contents.html"><img src="GrafLinks/C5Trimmed.png" alt="Where the walls speak — enter"></a></h1>
     <img class="piece cat" src="GrafLinks/catGuyTrimmed.png" alt="">
   </div>
   <img class="piece face" src="GrafLinks/C3Trimmed.png" alt="">
 </main>
-
-<a class="toc" href="Table%20of%20Contents.html">Table of Contents &rarr;</a>
 </body>
 </html>

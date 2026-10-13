@@ -91,7 +91,6 @@
       transform 0.55s var(--ease),
       box-shadow 0.55s var(--ease);
   }
-  .btn-home { --rot: -1.6deg; top: 1rem; left: 1rem; }
   .btn-back { --rot: -1.1deg; bottom: 1rem; left: 1rem; }
   .btn:hover,
   .btn:focus-visible {
@@ -99,6 +98,125 @@
     box-shadow: 0 3px 0 rgb(0 0 0 / 0.28), 0 12px 24px rgb(0 0 0 / 0.26);
   }
   .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+
+  /* Back / next buttons are a piece from the page they lead to. */
+  .btn-piece {
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    width: clamp(5rem, 10vw, 9rem);
+  }
+  .btn-piece img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 7rem;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.35));
+    transition: filter 0.55s var(--ease);
+  }
+  .btn-piece:hover,
+  .btn-piece:focus-visible {
+    transform: rotate(0deg) scale(1.12);
+    box-shadow: none;
+  }
+  .btn-piece:hover img,
+  .btn-piece:focus-visible img { filter: drop-shadow(0 10px 16px rgb(0 0 0 / 0.4)); }
+
+  /* ---------- Menu: the "Where the walls speak" piece opens a drop-down
+     with paint-splat links to the contents page and Do It Yourself. ---------- */
+  .menu {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 20;
+  }
+  .menu-toggle {
+    display: block;
+    width: clamp(5rem, 9vw, 8rem);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    transform: rotate(-2deg);
+    transition:
+      transform 0.55s var(--ease),
+      filter 0.55s var(--ease);
+  }
+  .menu-toggle img { display: block; width: 100%; height: auto; }
+  .menu-toggle:hover,
+  .menu-toggle:focus-visible,
+  .menu.is-open .menu-toggle {
+    transform: rotate(0deg) scale(1.12);
+    filter: drop-shadow(0 0 12px #4dff4d) brightness(1.2);
+  }
+  .menu-toggle:focus-visible { outline: 3px solid #4dff4d; outline-offset: 4px; }
+
+  .menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 1.6rem 0 0 2.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2.4rem;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-0.75rem);
+    transition:
+      opacity 0.3s ease,
+      transform 0.45s var(--ease),
+      visibility 0s linear 0.45s;
+  }
+  .menu.is-open .menu-list {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.3s ease,
+      transform 0.45s var(--ease),
+      visibility 0s;
+  }
+  .menu-list li:nth-child(odd)  { --rot: -1.6deg; }
+  .menu-list li:nth-child(even) { --rot:  1.4deg; }
+  /* Same colours as the stickers on the contents page. */
+  .to-contents { --paint: url(#menu-paint-black);   --text: #4dff4d; }
+  .to-history  { --paint: url(#menu-paint-green);   --text: #141412; }
+  .to-styles   { --paint: url(#menu-paint-magenta); --text: #141412; }
+  .to-diy      { --paint: url(#menu-paint-red);     --text: #ffffff; }
+  /* Splat behind each link, drawn larger than the label so the label sits
+     on its solid middle (same as the contents page stickers). */
+  .menu-link {
+    position: relative;
+    display: inline-block;
+    isolation: isolate;
+    padding: 0.35em 0.6em;
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-decoration: none;
+    transform: rotate(var(--rot));
+    filter: drop-shadow(0 2px 0 rgb(0 0 0 / 0.28)) drop-shadow(0 6px 10px rgb(0 0 0 / 0.2));
+    transition:
+      transform 0.55s var(--ease),
+      filter 0.55s var(--ease);
+  }
+  .menu-link::before {
+    content: "";
+    position: absolute;
+    inset: -60% -32%;
+    z-index: -1;
+    background: url("GrafLinks/splat.png") center / 100% 100% no-repeat;
+    filter: var(--paint);
+  }
+  .menu-link:hover,
+  .menu-link:focus-visible {
+    transform: translateX(0.4rem) rotate(0deg) scale(1.05);
+    filter: drop-shadow(0 3px 0 rgb(0 0 0 / 0.28)) drop-shadow(0 12px 18px rgb(0 0 0 / 0.3));
+  }
+  .menu-link:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
 
   .wall {
     display: flex;
@@ -149,11 +267,11 @@
   .morph.is-joined .hy { position: absolute; opacity: 0; }
   .col-text p {
     font-size: clamp(0.85rem, 2.4cqi, 1.1rem);
-    line-height: 2;
+    line-height: 1.62;
     color: var(--body);
     max-width: 68ch;
-    text-align: justify;
-    margin: 1.5rem 0 0;
+    text-align: left;
+    margin: 1.5rem auto 0;
     padding-bottom: 20vh;
   }
 
@@ -187,8 +305,35 @@
 </style>
 </head>
 <body>
-<a class="btn btn-home" href="Table%20of%20Contents.html">&larr; Home</a>
-<a class="btn btn-back" href="Graffiti%20Block%20Busters.html">&larr; Back: Block Busters</a>
+<nav class="menu" aria-label="Site">
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu-list">
+    <img src="GrafLinks/C5Trimmed.png" alt="Menu">
+  </button>
+  <ul class="menu-list" id="menu-list">
+    <li><a class="menu-link to-contents" href="Table%20of%20Contents.html">Introduction</a></li>
+    <li><a class="menu-link to-history" href="Graffiti%20History.html">History of NYC Graffiti</a></li>
+    <li><a class="menu-link to-diy" href="Graffiti%20DIY.html">Do It Yourself</a></li>
+  </ul>
+</nav>
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <filter id="menu-paint-green" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#4dff4d"/>
+    <feComposite in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="menu-paint-red" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#d7262e"/>
+    <feComposite in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="menu-paint-magenta" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#f22ef2"/>
+    <feComposite in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="menu-paint-black" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#0b0b0b"/>
+    <feComposite in2="SourceAlpha" operator="in"/>
+  </filter>
+</svg>
+<a class="btn btn-back btn-piece" href="Graffiti%20Block%20Busters.html"><img src="GrafLinks/panikTrimmed.png" alt="Back: Block Busters"></a>
 
 <main class="split">
   <section class="col col-pieces" tabindex="0" aria-label="Examples of characters">
@@ -255,6 +400,41 @@
     col.addEventListener('mouseleave', function () { setJoined(false); });
     col.addEventListener('focusin', function () { setJoined(true); });
     col.addEventListener('focusout', function () { setJoined(false); });
+  })();
+</script>
+<script>
+  // Menu: with a mouse it opens on hover; a tap, or Enter/Space on the
+  // piece, toggles it. Escape or clicking elsewhere closes it.
+  (function () {
+    var menu = document.querySelector('.menu');
+    var toggle = menu.querySelector('.menu-toggle');
+    var hoverable = window.matchMedia('(hover: hover)').matches;
+    var closeTimer;
+    function set(open) {
+      menu.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    }
+    toggle.addEventListener('click', function (e) {
+      // A mouse click while hovering just keeps it open; keyboard
+      // (detail 0) and touch toggle.
+      if (hoverable && e.detail > 0) set(true);
+      else set(!menu.classList.contains('is-open'));
+    });
+    if (hoverable) {
+      menu.addEventListener('mouseenter', function () { clearTimeout(closeTimer); set(true); });
+      menu.addEventListener('mouseleave', function () {
+        closeTimer = setTimeout(function () { set(false); }, 250);
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && menu.classList.contains('is-open')) { set(false); toggle.focus(); }
+    });
+    document.addEventListener('click', function (e) {
+      if (!menu.contains(e.target)) set(false);
+    });
+    menu.addEventListener('focusout', function (e) {
+      if (e.relatedTarget && !menu.contains(e.relatedTarget)) set(false);
+    });
   })();
 </script>
 </body>
