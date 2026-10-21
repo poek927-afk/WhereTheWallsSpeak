@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 64 64">
+  <!-- Spray can cursor. The white layer underneath outlines the can so it
+       shows on dark backgrounds and leaves thin white lines between parts. -->
+  <g fill="#fff" stroke="#fff" stroke-width="4" stroke-linejoin="round">
+    <path d="M42 4h7l1 7h-9z"/>
+    <rect x="38" y="12" width="16" height="3" rx="1.5"/>
+    <path d="M37 22c0-4.5 4-6.5 9-6.5s9 2 9 6.5z"/>
+    <rect x="35" y="23" width="22" height="3" rx="1.5"/>
+    <rect x="36" y="27" width="20" height="31"/>
+    <rect x="35" y="58.5" width="22" height="3" rx="1.5"/>
+  </g>
+  <g fill="#0b0b0b">
+    <path d="M42 4h7l1 7h-9z"/>
+    <rect x="38" y="12" width="16" height="3" rx="1.5"/>
+    <path d="M37 22c0-4.5 4-6.5 9-6.5s9 2 9 6.5z"/>
+    <rect x="35" y="23" width="22" height="3" rx="1.5"/>
+    <rect x="36" y="27" width="20" height="31"/>
+    <rect x="35" y="58.5" width="22" height="3" rx="1.5"/>
+  </g>
+  <circle cx="44" cy="7.3" r="1.4" fill="#fff"/>
+</svg>

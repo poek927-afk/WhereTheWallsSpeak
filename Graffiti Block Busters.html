@@ -67,6 +67,25 @@
   }
   .col::-webkit-scrollbar { display: none; }
   .col + .col { border-left: 1px solid var(--divider); }
+  /* Fixed column colours, whatever the device's light/dark setting:
+     the examples sit on black, the text on white. */
+  .col:not(.col-text) {
+    --bg: #0e0e0d;
+    --ink: #f6f5f1;
+    --body: #d4d2cb;
+    background: var(--bg);
+    color: var(--ink);
+    color-scheme: dark;
+  }
+  .col-text {
+    --bg: #fdfdfc;
+    --ink: #0b0b0b;
+    --body: #2b2b29;
+    --divider: #e4e2dc;
+    background: var(--bg);
+    color: var(--ink);
+    color-scheme: light;
+  }
   @media (hover: hover) {
     .col:hover { flex-grow: var(--grow); }
   }
@@ -138,7 +157,7 @@
     padding: 0;
     border: 0;
     background: none;
-    cursor: pointer;
+    cursor: url("GrafLinks/cursor-can.svg") 32 5, pointer;
     transform: rotate(-2deg);
     transition:
       transform 0.55s var(--ease),
@@ -296,6 +315,8 @@
     .js .reveal { opacity: 1; translate: none; }
   }
 </style>
+<link rel="stylesheet" href="cursor.css">
+<link rel="stylesheet" href="spray.css">
 </head>
 <body>
 <nav class="menu" aria-label="Site">
@@ -394,5 +415,6 @@
     });
   })();
 </script>
+<script src="spray.js"></script>
 </body>
 </html>

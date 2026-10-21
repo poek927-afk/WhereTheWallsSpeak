@@ -103,6 +103,12 @@
     container-type: inline-size;
   }
   .col-right { border-left: 1px solid var(--divider); }
+  /* Side by side, the left column alone sets how tall the page is: the
+     right column takes the same height and centres its stickers in it
+     instead of stretching the page further down. */
+  @media (min-width: 701px) {
+    .col-right { contain: size; overflow: clip; }
+  }
 
   /* ---------- Left column: intro text and the photo ---------- */
   .col-left {
@@ -272,6 +278,8 @@
     }
   }
 </style>
+<link rel="stylesheet" href="cursor.css">
+<link rel="stylesheet" href="spray.css">
 </head>
 <body>
 <svg width="0" height="0" style="position: absolute" aria-hidden="true">
@@ -357,5 +365,6 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   })();
 </script>
+<script src="spray.js"></script>
 </body>
 </html>

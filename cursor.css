@@ -1,0 +1,16 @@
+/* Spray-can cursor for every page. The point of the cursor is the can's
+   nozzle. While spray mode is on (html.spray-on: the spray-can button in the
+   left toolbar, or always on the Do It Yourself page), holding the mouse
+   button down swaps in the same can spraying paint. Fallbacks keep the
+   normal cursors if the images can't load. */
+html {
+  cursor: url("GrafLinks/cursor-can.svg") 32 5, auto;
+}
+a, button, label, select, summary, [role="button"],
+input[type="range"], input[type="checkbox"], input[type="radio"] {
+  cursor: url("GrafLinks/cursor-can.svg") 32 5, pointer;
+}
+html.spray-on:active,
+html.spray-on:active * {
+  cursor: url("GrafLinks/cursor-spray.svg") 32 5, auto !important;
+}

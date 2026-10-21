@@ -4,11 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Where the Walls Speak</title>
+<link rel="stylesheet" href="https://use.typekit.net/dct6kva.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&display=swap">
 <style>
   :root {
     --wall: #080808;
     --focus: #7ee36a;
     --font-body: "Shobhika", Georgia, "Times New Roman", serif;
+    --font-display: "abolition", "Anton", Impact, "Arial Narrow", sans-serif;
     --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
     color-scheme: dark;
   }
@@ -52,38 +55,62 @@
     min-height: 0;
     max-width: 100%;
     object-fit: contain;
+  }
+
+  .hoogs { height: min(97vh, 52vw); width: auto; align-self: center; }
+  .face  { height: min(97vh, 46vw); width: auto; align-self: center; }
+  .tag   { flex: none; width: 100%; max-height: 22vh; }
+  .title { flex: 1 1 0; margin: 0; display: flex; justify-content: center; }
+  .title img { display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; }
+  .cat   { flex: none; height: 30vh; width: auto; margin-bottom: -8vh; }
+
+  /* Only the title piece reacts: it lifts out of the wall and glows green. */
+  .title {
     transition:
       transform 0.6s var(--ease),
-      filter 0.6s var(--ease),
-      opacity 0.6s ease;
-    animation: spray-in 0.9s var(--ease) backwards;
+      filter 0.6s var(--ease);
   }
-
-  .hoogs { height: min(97vh, 52vw); width: auto; align-self: center; --tilt: -3deg; --glow: #d8d4cc; animation-delay: 0.05s; }
-  .face  { height: min(97vh, 46vw); width: auto; align-self: center; --tilt: 3deg;  --glow: #e0321e; animation-delay: 0.2s; }
-  .tag   { flex: none; width: 100%; max-height: 22vh; --tilt: -2deg; --glow: #f1e3c8; animation-delay: 0.35s; }
-  .title { flex: 1 1 0; margin: 0; display: flex; justify-content: center; --tilt: -2deg; --glow: #7ee36a; animation-delay: 0.7s; }
-  .title img { display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; }
-  .cat   { flex: none; height: 30vh; width: auto; margin-bottom: -8vh; --tilt: 4deg; --glow: #ffffff; animation-delay: 0.5s; }
-
-  /* Hovering a piece lifts it out of the wall and makes it glow in its own
-     paint colour, while everything else fades back. */
   @media (hover: hover) {
-    .piece:hover {
+    .title:hover {
       z-index: 5;
-      transform: scale(1.08) rotate(var(--tilt));
-      filter: drop-shadow(0 0 14px var(--glow)) brightness(1.25);
+      transform: scale(1.12) rotate(-2deg);
+      filter: drop-shadow(0 0 14px #7ee36a) brightness(1.25);
     }
-    .face:hover  { transform: scale(1.05) rotate(var(--tilt)); }
-    .cat:hover   { transform: translateY(-18%) scale(1.12) rotate(var(--tilt)); }
-    .title:hover { transform: scale(1.12) rotate(var(--tilt)); }
-    .wall:has(.piece:hover) .piece:not(:hover) { opacity: 0.25; }
   }
 
-  /* Pieces spray onto the wall one after another when the page loads. */
-  @keyframes spray-in {
-    from { opacity: 0; filter: blur(12px); transform: scale(1.1); }
+  /* The page starts completely white. Click and hold to spray: the spray
+     uncovers the wall underneath. Once most of it is uncovered, the rest
+     fades away and the title can be clicked. */
+  .cover {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    width: 100%;
+    height: 100%;
+    /* No CSS background: the white is painted on the canvas, so spraying it away shows the page. */
+    touch-action: none;
+    transition: opacity 0.9s ease;
   }
+  .cover.is-done { opacity: 0; pointer-events: none; }
+  .cover-hint {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 51;
+    margin: 0;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-size: clamp(3rem, 9vw, 7rem);
+    line-height: 1;
+    color: #6b6b68;
+    text-align: center;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+  }
+  .cover-hint.is-gone { opacity: 0; }
 
   /* The title piece is the way in: it links to the table of contents. */
   .title a { display: flex; justify-content: center; height: 100%; max-width: 100%; }
@@ -93,6 +120,7 @@
     *, *::before, *::after { transition: none !important; animation: none !important; }
   }
 </style>
+<link rel="stylesheet" href="cursor.css">
 </head>
 <body>
 <main class="wall">
@@ -104,5 +132,155 @@
   </div>
   <img class="piece face" src="GrafLinks/C3Trimmed.png" alt="">
 </main>
+
+<script>
+  // White cover over the landing page. Holding the mouse (or a finger) down
+  // sprays it away, uncovering the wall as if it were being sprayed on.
+  // Once most of the screen is uncovered the rest fades out. Tabbing to the
+  // title link uncovers everything straight away.
+  (function () {
+    var root = document.documentElement;
+    var cover = document.createElement('canvas');
+    cover.className = 'cover';
+    cover.setAttribute('aria-hidden', 'true');
+    var hint = document.createElement('p');
+    hint.className = 'cover-hint';
+    hint.setAttribute('aria-hidden', 'true');
+    hint.textContent = 'Click';
+    document.body.appendChild(cover);
+    document.body.appendChild(hint);
+    root.classList.add('spray-on'); // spraying cursor while the button is held
+
+    var ctx = cover.getContext('2d');
+    var dpr = 1;
+    var radius = 60;
+    var held = false;
+    var client = null;
+    var last = null;
+    var done = false;
+    var sized = false;
+
+    function size() {
+      var old = null;
+      if (sized) {
+        old = document.createElement('canvas');
+        old.width = cover.width;
+        old.height = cover.height;
+        old.getContext('2d').drawImage(cover, 0, 0);
+      }
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cover.width = Math.round(window.innerWidth * dpr);
+      cover.height = Math.round(window.innerHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      if (old) {
+        ctx.globalCompositeOperation = 'copy';
+        ctx.drawImage(old, 0, 0, window.innerWidth, window.innerHeight);
+      }
+      ctx.globalCompositeOperation = 'destination-out';
+      radius = Math.max(50, Math.min(window.innerWidth, window.innerHeight) * 0.1125); // a big nozzle so the wall uncovers quickly
+      sized = true;
+    }
+    size();
+    window.addEventListener('resize', function () { if (!done) size(); });
+
+    // Same spray as the rest of the site, but it erases the white: a soft
+    // cloud plus scattered droplets.
+    function scatter(r) {
+      var d = Math.sqrt(-2 * Math.log(1 - Math.random() * 0.999)) * r * 0.42;
+      return Math.min(d, r * 1.5);
+    }
+    function puff(x, y, strength) {
+      var r = radius;
+      var g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(0,0,0,' + 0.35 * strength + ')');
+      g.addColorStop(0.55, 'rgba(0,0,0,' + 0.2 * strength + ')');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#000';
+      var n = Math.round(r * 2 * strength);
+      for (var i = 0; i < n; i++) {
+        var a = Math.random() * Math.PI * 2;
+        var d = scatter(r);
+        ctx.globalAlpha = d > r ? 0.5 : 0.9;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, 0.5 + Math.random() * 1.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    function sprayAlong(a, b) {
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var dist = Math.hypot(dx, dy);
+      var steps = Math.max(1, Math.ceil(dist / (radius * 0.22)));
+      var strength = Math.max(0.35, 1 - dist / (radius * 6));
+      for (var i = 1; i <= steps; i++) {
+        var t = i / steps;
+        puff(a.x + dx * t, a.y + dy * t, strength);
+      }
+    }
+
+    // How much of the screen is uncovered, checked on a coarse grid.
+    function uncovered() {
+      var w = cover.width, h = cover.height;
+      var data = ctx.getImageData(0, 0, w, h).data;
+      var step = Math.round(24 * dpr), clear = 0, total = 0;
+      for (var y = step / 2; y < h; y += step) {
+        for (var x = step / 2; x < w; x += step) {
+          total++;
+          if (data[(Math.floor(y) * w + Math.floor(x)) * 4 + 3] < 128) clear++;
+        }
+      }
+      return clear / total;
+    }
+    function finish() {
+      if (done) return;
+      done = true;
+      held = false;
+      cover.classList.add('is-done');
+      hint.classList.add('is-gone');
+      root.classList.remove('spray-on');
+      setTimeout(function () { cover.remove(); hint.remove(); }, 1000);
+    }
+
+    var looping = false, frames = 0;
+    function frame() {
+      if (held && client) {
+        sprayAlong(last || client, client);
+        last = { x: client.x, y: client.y };
+        if (++frames % 20 === 0 && uncovered() > 0.6) finish();
+      }
+      if (held && !done) requestAnimationFrame(frame);
+      else looping = false;
+    }
+
+    cover.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0 || done) return;
+      cover.setPointerCapture(e.pointerId);
+      held = true;
+      client = { x: e.clientX, y: e.clientY };
+      last = null;
+      hint.classList.add('is-gone');
+      if (!looping) { looping = true; requestAnimationFrame(frame); }
+    });
+    cover.addEventListener('pointermove', function (e) {
+      if (held) client = { x: e.clientX, y: e.clientY };
+    });
+    function release() {
+      held = false;
+      client = null;
+      if (!done && uncovered() > 0.6) finish();
+    }
+    cover.addEventListener('pointerup', release);
+    cover.addEventListener('pointercancel', release);
+
+    document.querySelector('.title a').addEventListener('focus', finish);
+  })();
+</script>
 </body>
 </html>

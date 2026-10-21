@@ -1,0 +1,184 @@
+/* Spray paint over any page (every page but the title page). spray.js adds
+   a clear canvas over the page and a vertical toolbar on the left. The
+   spray-can button turns spray mode on and off; with it off, the paint stays
+   but the page works normally. */
+
+/* Paint outside the columns: one canvas over the whole page, in a box the
+   script sizes to the page's content so the canvas never adds scrolling. */
+.spray-pagebox {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  z-index: 8;
+  pointer-events: none;
+}
+.spray-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+/* Paint in a column: a box covering all of the column's content (so it
+   scrolls with it) holding a canvas that the script scales to the column's
+   width (so it grows and shrinks with it). */
+.spray-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  z-index: 9;
+  pointer-events: none;
+}
+.spray-col {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+/* Clear layer over the screen that takes strokes while spray mode is on;
+   below fixed buttons, the menu and the toolbar. */
+.spray-input {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: none;
+  touch-action: none;
+}
+html.spray-on .spray-input { display: block; }
+
+/* Ring that follows the mouse and shows how wide the spray is. */
+.spray-nozzle {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9;
+  width: var(--d, 60px);
+  height: var(--d, 60px);
+  margin: calc(var(--d, 60px) / -2) 0 0 calc(var(--d, 60px) / -2);
+  border: 2px solid var(--paint, #4dff4d);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+html.spray-on .spray-nozzle.is-on { opacity: 1; }
+
+/* ---------- Toolbar: vertical, on the left ---------- */
+.spray-tools {
+  position: fixed;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 15; /* below the drop-down menu so its links stay on top */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 0.45rem;
+  background: rgb(14 14 13 / 0.82);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 1.6rem;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.45);
+  color: #f6f5f1;
+  font-family: "Merriweather", Georgia, serif;
+  font-size: 0.7rem;
+}
+.spray-tools::-webkit-scrollbar { display: none; }
+
+/* Everything but the on/off button only shows while spray mode is on. */
+.spray-extra {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.2rem;
+}
+html.spray-on .spray-extra { display: flex; }
+
+.spray-toggle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.8rem;
+  height: 2.8rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.2s ease, transform 0.25s ease;
+}
+.spray-toggle:hover { background: rgb(255 255 255 / 0.12); transform: scale(1.06); }
+.spray-toggle svg { display: block; width: 2.2rem; height: 2.2rem; }
+/* The red X shows while spray mode is off. */
+.spray-toggle .spray-x { transition: opacity 0.2s ease; }
+html.spray-on .spray-toggle .spray-x { opacity: 0; }
+html.spray-on .spray-toggle { background: rgb(77 255 77 / 0.18); }
+
+.spray-swatches {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.spray-swatch {
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  border-radius: 50%;
+  background: var(--c);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.spray-swatch:hover { transform: scale(1.12); }
+.spray-swatch[aria-pressed="true"] {
+  border-color: #ffffff;
+  transform: scale(1.18);
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.6);
+}
+
+.spray-size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+/* Vertical slider: bottom is small, top is big. */
+.spray-size input {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 1.4rem;
+  height: 5.5rem;
+  margin: 0;
+  accent-color: #4dff4d;
+}
+
+.spray-btn {
+  width: 2.8rem;
+  padding: 0.4em 0;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  transition: background 0.2s ease;
+}
+.spray-btn:hover { background: rgb(255 255 255 / 0.12); }
+.spray-btn:disabled { opacity: 0.4; background: transparent; }
+
+.spray-toggle:focus-visible,
+.spray-swatch:focus-visible,
+.spray-btn:focus-visible,
+.spray-size input:focus-visible { outline: 3px solid #4dff4d; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spray-tools *, .spray-nozzle { transition: none !important; }
+}
