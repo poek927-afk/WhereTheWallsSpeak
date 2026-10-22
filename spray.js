@@ -1,5 +1,5 @@
 // Spray paint over any page (every page but the title page), with a vertical
-// toolbar on the left (see spray.css). The spray-can button turns spray mode
+// toolbar on the right (see spray.css). The spray-can button turns spray mode
 // on and off; the paint stays when it is off, and the page works normally
 // again. The spray itself is the same as the Do It Yourself page: a soft
 // cloud of paint plus droplets, sprayed every frame while the button is held,
@@ -95,6 +95,7 @@
       '<label class="spray-size">Size<input type="range" min="12" max="90" value="34" aria-label="Spray size"></label>' +
       '<button class="spray-btn" type="button" data-action="undo" disabled>Undo</button>' +
       '<button class="spray-btn" type="button" data-action="clear">Clear</button>' +
+      '<button class="spray-btn spray-save" type="button" data-action="save">Save</button>' +
     '</div>';
 
   document.body.appendChild(nozzle);
@@ -358,6 +359,126 @@
     remember(surfaces.map(grab));
     drips = [];
     surfaces.forEach(function (s) { s.ctx.clearRect(0, 0, s.canvas.width, s.canvas.height); });
+  });
+
+
+  // ---------- save: a real screenshot of this tab, using the browser's
+  // screen capture (it asks permission each time). The toolbar, menu and
+  // navigation buttons are hidden for the moment the picture is taken.
+  // Browsers without screen capture (phones) save the paint on its own,
+  // over the page colour, instead.
+  var saveBtn = tools.querySelector('[data-action="save"]');
+  var note = document.createElement('p');
+  note.className = 'spray-note';
+  note.setAttribute('role', 'status');
+  note.setAttribute('aria-live', 'polite');
+  document.body.appendChild(note);
+  var noteTimer;
+  function say(msg) {
+    note.textContent = msg;
+    note.classList.add('is-on');
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(function () { note.classList.remove('is-on'); }, 4000);
+  }
+
+  function pageColour() {
+    var c = getComputedStyle(document.body).backgroundColor;
+    return (!c || c === 'transparent' || c === 'rgba(0, 0, 0, 0)') ? '#ffffff' : c;
+  }
+
+  // The paint as it looks on screen right now, over the page colour.
+  function paintOnly() {
+    var out = document.createElement('canvas');
+    out.width = window.innerWidth;
+    out.height = window.innerHeight;
+    var o = out.getContext('2d');
+    o.fillStyle = pageColour();
+    o.fillRect(0, 0, out.width, out.height);
+    var pr = page.canvas.getBoundingClientRect();
+    o.drawImage(page.canvas, pr.left, pr.top);
+    cols.forEach(function (s) {
+      var show = s.host.getBoundingClientRect();
+      var cr = s.canvas.getBoundingClientRect();
+      o.save();
+      o.beginPath();
+      o.rect(show.left, show.top, show.width, show.height);
+      o.clip();
+      o.translate(cr.left, cr.top);
+      o.scale(s.k, s.k);
+      o.drawImage(s.canvas, 0, 0);
+      o.restore();
+    });
+    return out;
+  }
+
+  function fileName() {
+    var t = (document.title || 'page').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return 'my-graffiti-' + t + '.png';
+  }
+  function download(canvas) {
+    canvas.toBlob(function (blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    }, 'image/png');
+  }
+
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function nextFrames() {
+    return new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
+  }
+
+  function screenshot() {
+    return navigator.mediaDevices.getDisplayMedia({
+      video: { displaySurface: 'browser', cursor: 'never' },
+      audio: false,
+      preferCurrentTab: true,
+      selfBrowserSurface: 'include',
+      surfaceSwitching: 'exclude',
+      monitorTypeSurfaces: 'exclude'
+    }).then(function (stream) {
+      var video = document.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      video.srcObject = stream;
+      function done() {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        root.classList.remove('spray-capturing');
+      }
+      root.classList.add('spray-capturing');
+      return video.play()
+        .then(nextFrames)
+        .then(function () { return wait(350); }) // let the hidden controls clear from the capture
+        .then(function () {
+          var out = document.createElement('canvas');
+          out.width = video.videoWidth;
+          out.height = video.videoHeight;
+          out.getContext('2d').drawImage(video, 0, 0);
+          done();
+          return out;
+        }, function (err) { done(); throw err; });
+    });
+  }
+
+  saveBtn.addEventListener('click', function () {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)) {
+      download(paintOnly());
+      say('This browser can’t take screenshots, so your paint was saved on its own.');
+      return;
+    }
+    saveBtn.disabled = true;
+    screenshot().then(function (shot) {
+      download(shot);
+      say('Saved a screenshot.');
+    }, function () {
+      say('Screenshot cancelled.');
+    }).then(function () {
+      saveBtn.disabled = false;
+    });
   });
 
   // ---------- pointer input. One finger sprays; two fingers scroll.

@@ -192,13 +192,14 @@
   }
   .menu-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 
-  /* ---------- Toolbar: colours, nozzle size, undo, clear ---------- */
+  /* ---------- Toolbar: colours, wall, nozzle size, undo, clear, save.
+     A bar along the bottom of the screen. ---------- */
   .tools {
     position: fixed;
     left: 50%;
     bottom: max(1rem, env(safe-area-inset-bottom));
     transform: translateX(-50%);
-    z-index: 10;
+    z-index: 15;
     display: flex;
     flex-wrap: wrap;
     align-items: center;

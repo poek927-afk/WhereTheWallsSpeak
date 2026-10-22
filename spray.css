@@ -1,5 +1,5 @@
 /* Spray paint over any page (every page but the title page). spray.js adds
-   a clear canvas over the page and a vertical toolbar on the left. The
+   a clear canvas over the page and a vertical toolbar on the right. The
    spray-can button turns spray mode on and off; with it off, the paint stays
    but the page works normally. */
 
@@ -66,10 +66,10 @@ html.spray-on .spray-input { display: block; }
 }
 html.spray-on .spray-nozzle.is-on { opacity: 1; }
 
-/* ---------- Toolbar: vertical, on the left ---------- */
+/* ---------- Toolbar: vertical, on the right ---------- */
 .spray-tools {
   position: fixed;
-  left: 0.75rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   z-index: 15; /* below the drop-down menu so its links stay on top */
@@ -182,3 +182,40 @@ html.spray-on .spray-toggle { background: rgb(77 255 77 / 0.18); }
 @media (prefers-reduced-motion: reduce) {
   .spray-tools *, .spray-nozzle { transition: none !important; }
 }
+
+/* Save button and the short message after saving. */
+.spray-save {
+  background: #4dff4d;
+  border-color: #4dff4d;
+  color: #141412;
+}
+.spray-save:hover { background: #7dff7d; }
+.spray-note {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 16;
+  max-width: calc(100vw - 2rem);
+  margin: 0;
+  padding: 0.5em 1em;
+  background: rgb(14 14 13 / 0.88);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 999px;
+  color: #f6f5f1;
+  font-family: "Merriweather", Georgia, serif;
+  font-size: 0.8rem;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 0.5rem);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.spray-note.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+/* Hidden for the moment a screenshot is taken. */
+html.spray-capturing .spray-tools,
+html.spray-capturing .spray-nozzle,
+html.spray-capturing .spray-note,
+html.spray-capturing .menu,
+html.spray-capturing .btn,
+html.spray-capturing .btn-title { visibility: hidden !important; }
